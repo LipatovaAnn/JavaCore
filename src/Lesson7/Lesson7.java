@@ -5,13 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
 public class Lesson7 {
+      static String dbName = "weather.db";
     public static void main(String[] args) throws
-
-            IOException {
+            IOException, ClassNotFoundException {
+        Class.forName("org.sqlite.JDBC");
+        var connector= new Connect(dbName);
+        connector.ensureDatabaseExists();
+        var weatherRepository=new WeatherRepository(connector);
         OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
         Request request = new Request.Builder()
@@ -31,6 +37,15 @@ public class Lesson7 {
             var day=weather.daily.get(i);
             var date= new Date(day.dt*1000);
         System.out.println("В городе Санкт-Петербург на дату " + date+"  ожидается "+day.weather.get(0).description + ", температура  " +day.temp.day);
+        weatherRepository.addWeatherRecord(day.weather.get(0).description, date, Double.parseDouble( day.temp.day));
         }
+
+        var records=weatherRepository.getAllRecords();
+        System.out.println();
+        for (int i=0; (i<records.size()); i++) {
+            var record=records.get(i);
+            System.out.println(record.id + "  В городе Санкт-Петербург на дату " + record.weatherdate+"  ожидается "+record.weather + ", температура  " +record.temperature);
+        }
+
     }
 }
